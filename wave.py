@@ -16,7 +16,7 @@ def incident(kvec, points):
 	@return complex number
 	"""
 	n = points.shape[0]
-	return numpy.exp([1j*kvec.dot(points[i, :]) for i in range(n)])
+	return numpy.exp(1j*points.dot(kvec))
 
 
 def gradIncident(kvec, nDotK, points):
