@@ -43,17 +43,36 @@ def computeScatteredWave(kvec, xc, yc, point):
 	@return complex value
 	"""
 
+	# |kvec|
 	kmod = numpy.sqrt(kvec.dot(kvec))
 
+	# number of points
 	n = len(xc)
+
+	# number of segments
 	nm1 = n - 1
+
+	# contour points as a n times 3 array
 	pc = numpy.array([(xc[i], yc[i], 0.) for i in range(n)])
+
+	# vectors from one point to the next, nm1 * 3 array
 	xdot = pc[1:, :] - pc[:-1, :]
+
+	# mid-segment positions, array of size nm1 * 3
 	pmid = 0.5*(pc[1:, :] + pc[:-1, :])
+
+	# segment lengths, array of size nm1
 	dsdt = numpy.sqrt(xdot[:, 0]*xdot[:, 0] + xdot[:, 1]*xdot[:, 1])
+
+	# normal vectors at the mid segment locations, array of size nm1 * 3
 	nvec = numpy.array([numpy.cross(ZHAT, xdot[i, :]) for i in range(nm1)])
+
+	# vector from the mid-segment positions to the observer, array of size nm1 * 3
 	rvec = numpy.array([point - pmid[i, :] for i in range(nm1)])
+
+	# distance from mid-segmen positions to observer, array of size nm1
 	r = numpy.sqrt(rvec[:, 0]*rvec[:, 0] + rvec[:, 1]*rvec[:, 1])
+
 	kr = kmod * r
 	nDotR = numpy.array([nvec[i, :].dot(rvec[i, :]) for i in range(nm1)])
 	nDotK = numpy.array([nvec[i, :].dot(kvec) for i in range(nm1)])
