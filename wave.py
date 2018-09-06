@@ -7,77 +7,28 @@ TWOPI = 2. * PI
 FOURPI = 2. * TWOPI
 
 
-def incident(kvec, point):
+def incident(kvec, points):
 	"""
 	Incident wave
 
 	@param kvec incident wave vector
-	@param point target point
+	@param point target points, of size n * 3
 	@return complex number
 	"""
-	return numpy.exp(1j*kvec.dot(point))
+	n = points.shape[0]
+	return numpy.exp([1j*kvec.dot(points[i, :]) for i in range(n)])
 
 
-def gradIncident(nvec, kvec, point):
+def gradIncident(kvec, nDotK, points):
 	"""
 	Normal gradient of the incident wave, assumes incident wave is exp(1j * kvec.x)
 
-	@param nvec normal vector pointing outwards
 	@param kvec incident wave vector
-	@param point (source) point
+	@param nDotK nvec . kvec array of size n
+	@param points (source) point, array of size n * 3
 	@return complex number
 	"""
-	return 1j*nvec.dot(kvec)*incident(kvec, point)
-
-
-def computeScatteredWaveElement(kvec, p0, p1, point):
-	"""
-	Scattered wave contribution from a single segment
-	@param kvec incident wave vector
-	@param p0 starting point of the segment
-	@param p1 end point of the segment
-	@param point observer point
-	@return complex value
-	"""
-
-	# xdot is antoclockwise
-	xdot = p1 - p0
-
-	# mid point of the segment
-	pmid = 0.5*(p0 + p1)
-
-	# segment length
-	dsdt = numpy.sqrt(xdot.dot(xdot))
-
-	# normal vector, pointintg inwards and normalised
-	nvec = numpy.cross(ZHAT, xdot)
-	nvec /= numpy.sqrt(nvec.dot(nvec))
-
-	# from segment mid-point to observer
-	rvec = point - pmid
-	r = numpy.sqrt(rvec.dot(rvec))
-
-	kmod = numpy.sqrt(kvec.dot(kvec))
-	kr = kmod * r
-
-	# Green functions and normal derivatives
-	g = (1j/4.) * hankel1(0, kr)
-	dgdn = (-1j/4.) * hankel1(1, kr) * kmod * nvec.dot(rvec) / r
-
-	# contribution from the gradient of the incident wave on the surface
-	# of the obstacle. The normal derivative of the scattered wave is 
-	# - normal derivative of the incident wave.
-	scattered_wave = - dsdt * g * gradIncident(nvec, kvec, pmid)
-
-	# shadow side: total wave is nearly zero 
-	#              => scattered wave amplitude = -incident wave ampl.
-	#
-	# illuminated side:
-	#              => scattered wave amplitude = +incident wave ampl.
-	shadow = 2*((nvec.dot(kvec) > 0.) - 0.5) # +1 on the shadow side, -1 on the illuminated side
-	scattered_wave += shadow * dsdt * dgdn * incident(kvec, pmid)
-
-	return scattered_wave
+	return 1j*nDotK*incident(kvec, points)
 
 
 def computeScatteredWave(kvec, xc, yc, point):
@@ -91,12 +42,37 @@ def computeScatteredWave(kvec, xc, yc, point):
 	@param point observer point
 	@return complex value
 	"""
-	res = 0j
+
+	kmod = numpy.sqrt(kvec.dot(kvec))
+
 	n = len(xc)
-	for i0 in range(n - 1):
-		p0 = numpy.array([xc[i0], yc[i0], 0.])
-		i1 = i0 + 1
-		p1 = numpy.array([xc[i1], yc[i1], 0.])
-		res += computeScatteredWaveElement(kvec, p0, p1, point)
-	return res
+	nm1 = n - 1
+	pc = numpy.array([(xc[i], yc[i], 0.) for i in range(n)])
+	xdot = pc[1:, :] - pc[:-1, :]
+	pmid = 0.5*(pc[1:, :] + pc[:-1, :])
+	dsdt = numpy.sqrt(xdot[:, 0]*xdot[:, 0] + xdot[:, 1]*xdot[:, 1])
+	nvec = numpy.array([numpy.cross(ZHAT, xdot[i, :]) for i in range(nm1)])
+	rvec = numpy.array([point - pmid[i, :] for i in range(nm1)])
+	r = numpy.sqrt(rvec[:, 0]*rvec[:, 0] + rvec[:, 1]*rvec[:, 1])
+	kr = kmod * r
+	nDotR = numpy.array([nvec[i, :].dot(rvec[i, :]) for i in range(nm1)])
+	nDotK = numpy.array([nvec[i, :].dot(kvec) for i in range(nm1)])
+
+	g = (1j/4.) * hankel1(0, kr)
+	dgdn = (-1j/4.) * hankel1(1, kr) * kmod * nDotR / r
+
+	# contribution from the gradient of the incident wave on the surface
+	# of the obstacle. The normal derivative of the scattered wave is 
+	# - normal derivative of the incident wave.
+	scattered_wave = - dsdt * g * gradIncident(kvec, nDotK, pmid)
+
+	# shadow side: total wave is nearly zero 
+	#              => scattered wave amplitude = -incident wave ampl.
+	#
+	# illuminated side:
+	#              => scattered wave amplitude = +incident wave ampl.
+	shadow = (nDotK > 0.) - 0.5
+	scattered_wave += shadow * dsdt * dgdn * incident(kvec, pmid)
+
+	return scattered_wave.sum()
 

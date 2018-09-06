@@ -63,7 +63,7 @@ for j in range(ny + 1):
 		if isInsideContour(p, xc, yc):
 			continue
 
-		inci[j, i] = wave.incident(kvec, p)
+		inci[j, i] = wave.incident(kvec, p.reshape(1, 3))
 		scat[j, i] = wave.computeScatteredWave(kvec, xc, yc, p)
 
 if args.checksum:
