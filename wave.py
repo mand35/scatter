@@ -65,7 +65,7 @@ def computeScatteredWave(kvec, xc, yc, point):
 	dsdt = numpy.sqrt(xdot[:, 0]*xdot[:, 0] + xdot[:, 1]*xdot[:, 1])
 
 	# normal vectors at the mid segment locations, array of size nm1 * 3
-	nvec = numpy.array([numpy.cross(ZHAT, xdot[i, :]) for i in range(nm1)])
+	nvec = numpy.array([numpy.cross(ZHAT, xdot[i, :])/dsdt[i] for i in range(nm1)])
 
 	# vector from the mid-segment positions to the observer, array of size nm1 * 3
 	rvec = numpy.array([point - pmid[i, :] for i in range(nm1)])
@@ -79,6 +79,10 @@ def computeScatteredWave(kvec, xc, yc, point):
 
 	g = (1j/4.) * hankel1(0, kr)
 	dgdn = (-1j/4.) * hankel1(1, kr) * kmod * nDotR / r
+
+	#print 'dsdt = ', dsdt
+	#print 'pmid = ', pmid
+	#print 'nDotK = '
 
 	# contribution from the gradient of the incident wave on the surface
 	# of the obstacle. The normal derivative of the scattered wave is 
