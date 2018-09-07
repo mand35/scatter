@@ -77,13 +77,8 @@ def computeScatteredWave(kvec, xc, yc, point):
 	nDotR = numpy.array([nvec[i, :].dot(rvec[i, :]) for i in range(nm1)])
 	nDotK = numpy.array([nvec[i, :].dot(kvec) for i in range(nm1)])
 
-	g = (1j/4.) * hankel1(0, kr)
-	dgdn = (-1j/4.) * hankel1(1, kr) * kmod * nDotR / r
-
-	# contribution from the gradient of the incident wave on the surface
-	# of the obstacle. The normal derivative of the scattered wave is 
-	# - normal derivative of the incident wave.
-	scattered_wave = - dsdt * g * gradIncident(kvec, nDotK, pmid)
+	g =  0.25j * hankel1(0, kr)
+	dgdn = -0.25j * kmod * nDotR * hankel1(1, kr) / r
 
 	# shadow side: total wave is nearly zero 
 	#              => scattered wave amplitude = -incident wave ampl.
@@ -91,7 +86,10 @@ def computeScatteredWave(kvec, xc, yc, point):
 	# illuminated side:
 	#              => scattered wave amplitude = +incident wave ampl.
 	shadow = 2*((nDotK > 0.) - 0.5)
-	scattered_wave += shadow * dsdt * dgdn * incident(kvec, pmid)
 
-	return scattered_wave.sum()
+	# contribution from the gradient of the incident wave on the surface
+	# of the obstacle. The normal derivative of the scattered wave is 
+	# - normal derivative of the incident wave.
+	return numpy.sum( dsdt * (-g * gradIncident(kvec, nDotK, pmid) + \
+                              shadow * dgdn * incident(kvec, pmid)) )
 
