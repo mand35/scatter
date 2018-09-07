@@ -1,4 +1,12 @@
 #include <wave.h>
+#include <boost/math/special_functions/bessel.hpp>
+
+std::complex<double>
+hankel1(int n, double x) {
+	double besselJ<int, double> = boost::math::cyl_bessel_j(n, x);
+	double besselY<int, double> = boost::math::cyl_neumann(n, x);
+	return besselJ + J1*besselY;
+}
 
 std::complex<double> 
 incident(const double kvec[], const double point[]) {
