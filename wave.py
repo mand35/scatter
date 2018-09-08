@@ -1,7 +1,6 @@
 import numpy
 from scipy.special import hankel1
 
-ZHAT = numpy.array([0., 0., 1.])
 PI = numpy.pi
 TWOPI = 2. * PI
 FOURPI = 2. * TWOPI
@@ -52,8 +51,8 @@ def computeScatteredWave(kvec, xc, yc, point):
 	# number of segments
 	nm1 = n - 1
 
-	# contour points as a n times 3 array
-	pc = numpy.array([(xc[i], yc[i], 0.) for i in range(n)])
+	# contour points as an n * 3 array
+	pc = numpy.array([[xc[i], yc[i],] for i in range(n)])
 
 	# vectors from one point to the next, nm1 * 3 array
 	xdot = pc[1:, :] - pc[:-1, :]
@@ -65,12 +64,12 @@ def computeScatteredWave(kvec, xc, yc, point):
 	dsdt = numpy.sqrt(xdot[:, 0]*xdot[:, 0] + xdot[:, 1]*xdot[:, 1])
 
 	# normal vectors at the mid segment locations, array of size nm1 * 3
-	nvec = numpy.array([numpy.cross(ZHAT, xdot[i, :])/dsdt[i] for i in range(nm1)])
+        nvec = numpy.array([[-xdot[i, 1]/dsdt[i], xdot[i, 0]/dsdt[i]] for i in range(nm1)])
 
 	# vector from the mid-segment positions to the observer, array of size nm1 * 3
 	rvec = numpy.array([point - pmid[i, :] for i in range(nm1)])
 
-	# distance from mid-segmen positions to observer, array of size nm1
+	# distance from mid-segment positions to observer, array of size nm1
 	r = numpy.sqrt(rvec[:, 0]*rvec[:, 0] + rvec[:, 1]*rvec[:, 1])
 
 	kr = kmod * r
