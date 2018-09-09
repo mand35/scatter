@@ -15,6 +15,7 @@
  * @param point target point
  * @return amplitude
  */
+extern "C"
 std::complex<double> 
 incident(const double kvec[], const double point[]);
 
@@ -26,6 +27,7 @@ incident(const double kvec[], const double point[]);
  * @param point (source) point
  * @return amplitude
  */
+extern "C"
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
 	         const double point[]);
@@ -53,6 +55,7 @@ computeScatteredWaveElement(const double kvec[], const double p0[],
  * @param point observer point
  * @return wave response
 */
+extern "C"
 std::complex<double> 
 computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
 	                 const double point[]);

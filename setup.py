@@ -18,5 +18,4 @@ setup(
 		                           library_dirs=[boost_dir + '/lib'],
 		                           libraries=['boost_math_tr1'],
 		                   )],
-	)
-
+)

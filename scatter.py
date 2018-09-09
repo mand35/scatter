@@ -4,6 +4,8 @@ import scipy.special
 from numpy import cos, sin, pi
 import math
 import saveVtk
+import ctypes
+import os
 import wave
 
 parser = argparse.ArgumentParser(description='Compute field scattered by an obstacle.')
@@ -59,6 +61,19 @@ ymin, ymax = yc.min() - 3*args.lmbda, yc.max() + 4*args.lmbda
 xg = numpy.linspace(xmin, xmax, nx + 1)
 yg = numpy.linspace(ymin, ymax, ny + 1)
 
+# find the library under the build directory
+waveLibFile = ''
+for root, dirs, files in os.walk('build/'):
+	for file in files:
+		if file == 'wave.so':
+			waveLibFile = os.path.join(root, file)
+# open the shared library 
+wavelib = ctypes.CDLL(waveLibFile)
+
+# create some types for calling C++
+double2Type = (2 * ctypes.c_double)
+complexType = (2 * ctypes.c_double)
+doubleArrayType = ctypes.POINTER(ctypes.c_double)
 
 # compute the field
 scat = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
@@ -76,8 +91,18 @@ for j in range(ny + 1):
 		if isInsideContour(p, xc, yc):
 			continue
 
-		inci[j, i] = wave.incident(kvec, p)
-		scat[j, i] = wave.computeScatteredWave(kvec, xc, yc, p)
+		wavelib.incident.argtypes = [double2Type, double2Type]
+		wavelib.incident.restype = complexType
+		inci[j, i] = wavelib.incident(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
+			                          p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+
+		wavelib.computeScatteredWave.argtypes = [double2Type, ctypes.c_int, doubleArrayType, doubleArrayType, double2Type]
+		wavelib.computeScatteredWave.restype = complexType
+		scat[j, i] = wavelib.computeScatteredWave(kvec, 
+			                                      len(xc), 
+			                                      xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			                                      yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			                                      p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),)
 
 if args.checksum:
 	print('Squared sum of scattered field amplitudes: {}'.format((scat*numpy.conj(scat)).sum().real))

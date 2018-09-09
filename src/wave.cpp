@@ -8,12 +8,14 @@ hankel1(int n, double x) {
 	return besselJ + J1*besselY;
 }
 
+extern "C"
 std::complex<double> 
 incident(const double kvec[], const double point[]) {
 	return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
 }
 
 
+extern "C"
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
 	         const double point[]) {
@@ -67,6 +69,7 @@ computeScatteredWaveElement(const double kvec[], const double p0[],
     return scattered_wave;
 }
 
+extern "C"
 std::complex<double> 
 computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
 	                 const double point[]) {
