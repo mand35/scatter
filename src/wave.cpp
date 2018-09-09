@@ -9,7 +9,7 @@ hankel1(int n, double x) {
 }
 
 std::complex<double> 
-incident(const double kvec[], const double point[], double* real_part, double* imag_part) {
+incident(const double kvec[], const double point[]) {
 	return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
 }
 
