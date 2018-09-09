@@ -71,11 +71,12 @@ for root, dirs, files in os.walk('build/'):
 wavelib = ctypes.CDLL(waveLibFile)
 
 # create some types for calling C++
-double2Type = (2 * ctypes.c_double)
-complexType = (2 * ctypes.c_double)
+double2Type = (2 * ctypes.c_double)()
+complexType = (2 * ctypes.c_double)()
 doubleArrayType = ctypes.POINTER(ctypes.c_double)
 
 # compute the field
+re, im = ctypes.c_double(0.), ctypes.c_double(0.)
 scat = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 inci = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 for j in range(ny + 1):
@@ -91,18 +92,25 @@ for j in range(ny + 1):
 		if isInsideContour(p, xc, yc):
 			continue
 
-		wavelib.incident.argtypes = [double2Type, double2Type]
-		wavelib.incident.restype = complexType
-		inci[j, i] = wavelib.incident(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
-			                          p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)))
+		wavelib.cincident.restype = None
+		wavelib.cincident.argtypes = [double2Type, double2Type, 
+		                             ctypes.byref(ctypes.c_double), ctypes.byref(ctypes.c_double)]
+		wavelib.cincident(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
+			              p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			              ctypes.byref(realVal), ctypes.byref(imagVal))
+		inci[j, i] = realVal + 1j*imagVal
 
-		wavelib.computeScatteredWave.argtypes = [double2Type, ctypes.c_int, doubleArrayType, doubleArrayType, double2Type]
-		wavelib.computeScatteredWave.restype = complexType
-		scat[j, i] = wavelib.computeScatteredWave(kvec, 
-			                                      len(xc), 
-			                                      xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                                      yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                                      p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),)
+		wavelib.computeScatteredWave.restype = None
+		wavelib.computeScatteredWave.argtypes = [double2Type, ctypes.c_int, doubleArrayType, 
+		                                         doubleArrayType, double2Type,
+		                                         ctypes.byref(ctypes.c_double), ctypes.byref(ctypes.c_double)]
+		wavelib.computeScatteredWave(kvec, 
+			                         len(xc), 
+			                         xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			                         yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			                         p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
+			                         ctypes.byref(realVal), ctypes.byref(imagVal))
+		scat[j, i] = realVal + 1j*imagVal
 
 if args.checksum:
 	print('Squared sum of scattered field amplitudes: {}'.format((scat*numpy.conj(scat)).sum().real))

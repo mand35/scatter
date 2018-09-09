@@ -8,14 +8,11 @@ hankel1(int n, double x) {
 	return besselJ + J1*besselY;
 }
 
-extern "C"
 std::complex<double> 
-incident(const double kvec[], const double point[]) {
+incident(const double kvec[], const double point[], double* real_part, double* imag_part) {
 	return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
 }
 
-
-extern "C"
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
 	         const double point[]) {
@@ -69,10 +66,15 @@ computeScatteredWaveElement(const double kvec[], const double p0[],
     return scattered_wave;
 }
 
-extern "C"
-std::complex<double> 
-computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
-	                 const double point[]) {
+extern "C" void
+cincident (const double kvec[], const double point[], double* real_part, double* imag_part) {
+    std::complex<double> res = incident(kvec, point);
+    *real_part = res.real();
+    *imag_part = res.imag();
+}
+
+extern "C" void computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
+	                                 const double point[], double* real_part, double* imag_part) {
 	double p0[2], p1[2];
 	std::complex<double> res(0., 0.);
 	for (int i = 0; i < nc - 1; ++i) {
@@ -80,6 +82,7 @@ computeScatteredWave(const double kvec[], int nc, const double xc[], const doubl
 		p1[0] = xc[i + 1]; p1[1] = yc[i + 1];
 		res += computeScatteredWaveElement(kvec, p0, p1, point);
 	}
-	return res;
+    *real_part = res.real();
+    *imag_part = res.imag();
 }
 

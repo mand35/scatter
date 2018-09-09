@@ -15,9 +15,21 @@
  * @param point target point
  * @return amplitude
  */
-extern "C"
-std::complex<double> 
+std::complex<double>
 incident(const double kvec[], const double point[]);
+
+/**
+ * Incident wave
+ * 
+ * @param kvec incident wave vector
+ * @param point target point
+ * @return amplitude
+ * @param real_part real part of the output
+ * @param imag_part imaginary part of the output
+ */
+extern "C" void
+cincident(const double kvec[], const double point[], 
+	      double* real_part, double* imag_part);
 
 /**
  * Normal gradient of the incident wave, assumes incident wave is exp(1j * kvec.x)
@@ -27,7 +39,6 @@ incident(const double kvec[], const double point[]);
  * @param point (source) point
  * @return amplitude
  */
-extern "C"
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
 	         const double point[]);
@@ -53,11 +64,12 @@ computeScatteredWaveElement(const double kvec[], const double p0[],
  * @param xc list of x coordinates representing the contour, must close
  * @param yc list of y coordinates representing the contour, must close
  * @param point observer point
+ * @param real_part real part of the output
+ * @param imag_part imaginary part of the output
  * @return wave response
 */
-extern "C"
-std::complex<double> 
+extern "C" void
 computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
-	                 const double point[]);
+	                 const double point[], double* real_part, double* imag_part);
 
 #endif // WAVE_H
