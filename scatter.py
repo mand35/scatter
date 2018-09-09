@@ -50,7 +50,9 @@ def isInsideContour(p, xc, yc, tol=0.01):
 	return (abs(tot) > tol)
 
 # contour points of the obstacle
-t = numpy.linspace(0., 1., args.nc + 1)
+nc = args.nc
+nc1 = nc + 1
+t = numpy.linspace(0., 1., nc1)
 xc = eval(args.xContourExpr)
 yc = eval(args.yContourExpr)
 
@@ -71,12 +73,10 @@ for root, dirs, files in os.walk('build/'):
 wavelib = ctypes.CDLL(waveLibFile)
 
 # create some types for calling C++
-double2Type = (2 * ctypes.c_double)()
-complexType = (2 * ctypes.c_double)()
-doubleArrayType = ctypes.POINTER(ctypes.c_double)
+doubleStarType = ctypes.POINTER(ctypes.c_double) 
 
 # compute the field
-re, im = ctypes.c_double(0.), ctypes.c_double(0.)
+realVal, imagVal = ctypes.c_double(0.), ctypes.c_double(0.)
 scat = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 inci = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 for j in range(ny + 1):
@@ -93,24 +93,32 @@ for j in range(ny + 1):
 			continue
 
 		wavelib.cincident.restype = None
-		wavelib.cincident.argtypes = [double2Type, double2Type, 
-		                             ctypes.byref(ctypes.c_double), ctypes.byref(ctypes.c_double)]
+		wavelib.cincident.argtypes = [doubleStarType, 
+		                              doubleStarType, 
+		                              doubleStarType, 
+		                              doubleStarType]
 		wavelib.cincident(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
 			              p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			              ctypes.byref(realVal), ctypes.byref(imagVal))
-		inci[j, i] = realVal + 1j*imagVal
+			              ctypes.byref(realVal),
+			              ctypes.byref(imagVal))
+		inci[j, i] = realVal.value + 1j*imagVal.value
 
 		wavelib.computeScatteredWave.restype = None
-		wavelib.computeScatteredWave.argtypes = [double2Type, ctypes.c_int, doubleArrayType, 
-		                                         doubleArrayType, double2Type,
-		                                         ctypes.byref(ctypes.c_double), ctypes.byref(ctypes.c_double)]
-		wavelib.computeScatteredWave(kvec, 
-			                         len(xc), 
+		wavelib.computeScatteredWave.argtypes = [doubleStarType,
+		                                         ctypes.c_int, 
+		                                         doubleStarType,
+		                                         doubleStarType,
+		                                         doubleStarType,
+		                                         doubleStarType,
+		                                         doubleStarType,]
+		wavelib.computeScatteredWave(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
+			                         nc1, 
 			                         xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
 			                         yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
 			                         p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                         ctypes.byref(realVal), ctypes.byref(imagVal))
-		scat[j, i] = realVal + 1j*imagVal
+			                         ctypes.byref(realVal), 
+			                         ctypes.byref(imagVal))
+		scat[j, i] = realVal.value + 1j*imagVal.value
 
 if args.checksum:
 	print('Squared sum of scattered field amplitudes: {}'.format((scat*numpy.conj(scat)).sum().real))
