@@ -1,4 +1,4 @@
-#include <cmath.h>
+#include <cmath>
 #include <complex>
 
 #ifndef WAVE_H
