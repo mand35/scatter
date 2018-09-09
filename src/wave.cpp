@@ -1,6 +1,13 @@
 #include "wave.h"
 #include <boost/math/special_functions/bessel.hpp>
 
+/**
+ * Hankel_n^{(1)} function
+ * 
+ * @param  n index
+ * @param x argument
+ * @return value
+ */
 std::complex<double>
 hankel1(int n, double x) {
 	double besselJ = boost::math::cyl_bessel_j<int, double>(n, x);
@@ -8,17 +15,41 @@ hankel1(int n, double x) {
 	return besselJ + J1*besselY;
 }
 
+/**
+ * Incident wave
+ * 
+ * @param kvec incident wave vector
+ * @param point target point
+ * @return amplitude
+ */
 std::complex<double> 
 incident(const double kvec[], const double point[]) {
 	return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
 }
 
+/**
+ * Normal gradient of the incident wave, assumes incident wave is exp(1j * kvec.x)
+ *
+ * @param nvec normal vector pointing inwards
+ * @param kvec incident wave vector
+ * @param point (source) point
+ * @return amplitude
+ */
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
 	         const double point[]) {
 	return J1*(nvec[0]*kvec[0] + nvec[1]*kvec[1])*incident(kvec, point);
 }
 
+/**
+ * Scattered wave contribution from a single segment
+ *
+ * @param kvec incident wave vector
+ * @param p0 starting point of the segment
+ * @param p1 end point of the segment
+ * @param point observer point
+ * @return wave contribution
+ */
 std::complex<double> 
 computeScatteredWaveElement(const double kvec[], const double p0[], 
 	                        const double p1[], const double point[]) {
