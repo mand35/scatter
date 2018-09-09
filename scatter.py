@@ -18,7 +18,6 @@ parser.add_argument('-yc', dest='yContourExpr', type=str, default='sin(2*pi*t)',
 parser.add_argument('-save', dest='save', action='store_true', help='save time varying solution in VTK files')
 parser.add_argument('-checksum', dest='checksum', action='store_true', help='compute and print a checksum of the scattered wave')
 
-
 args = parser.parse_args()
 
 twoPi = 2. * numpy.pi
@@ -75,8 +74,10 @@ wavelib = ctypes.CDLL(waveLibFile)
 # create some types for calling C++
 doubleStarType = ctypes.POINTER(ctypes.c_double) 
 
-# compute the field
+# containers to receive the output values of the C function
 realVal, imagVal = ctypes.c_double(0.), ctypes.c_double(0.)
+
+# compute the field
 scat = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 inci = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
 for j in range(ny + 1):
@@ -92,32 +93,37 @@ for j in range(ny + 1):
 		if isInsideContour(p, xc, yc):
 			continue
 
+		# get the pointers from the numpy arrays
+		kvecPtr = kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+		pPtr = p.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+
+		# declare prototype of cincident external C++ function 
+
+		# returns void
 		wavelib.cincident.restype = None
+		# double*, double*, double*, double*
 		wavelib.cincident.argtypes = [doubleStarType, 
 		                              doubleStarType, 
 		                              doubleStarType, 
 		                              doubleStarType]
-		wavelib.cincident(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
-			              p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			              ctypes.byref(realVal),
-			              ctypes.byref(imagVal))
+		wavelib.cincident(kvecPtr, pPtr, ctypes.byref(realVal), ctypes.byref(imagVal))
 		inci[j, i] = realVal.value + 1j*imagVal.value
 
+		xcPtr = xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+		ycPtr = yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+
+		# returns void
 		wavelib.computeScatteredWave.restype = None
+		# double*, int, double*, double*, double*, double*, double* 
 		wavelib.computeScatteredWave.argtypes = [doubleStarType,
 		                                         ctypes.c_int, 
 		                                         doubleStarType,
 		                                         doubleStarType,
 		                                         doubleStarType,
 		                                         doubleStarType,
-		                                         doubleStarType,]
-		wavelib.computeScatteredWave(kvec.ctypes.data_as(ctypes.POINTER(ctypes.c_double)), 
-			                         nc1, 
-			                         xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                         yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                         p.ctypes.data_as(ctypes.POINTER(ctypes.c_double)),
-			                         ctypes.byref(realVal), 
-			                         ctypes.byref(imagVal))
+		                                         doubleStarType]
+		wavelib.computeScatteredWave(kvecPtr, nc1, xcPtr, ycPtr, pPtr, 
+			                         ctypes.byref(realVal), ctypes.byref(imagVal))
 		scat[j, i] = realVal.value + 1j*imagVal.value
 
 if args.checksum:
