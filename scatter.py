@@ -68,6 +68,7 @@ for root, dirs, files in os.walk('build/'):
 	for file in files:
 		if file == 'wave.so':
 			waveLibFile = os.path.join(root, file)
+
 # open the shared library 
 wavelib = ctypes.CDLL(waveLibFile)
 
@@ -76,6 +77,23 @@ doubleStarType = ctypes.POINTER(ctypes.c_double)
 
 # containers to receive the output values of the C function
 realVal, imagVal = ctypes.c_double(0.), ctypes.c_double(0.)
+
+# returns void
+wavelib.cincident.restype = None
+# double*, double*, double*, double*
+wavelib.cincident.argtypes = [doubleStarType, doubleStarType, 
+		                      doubleStarType, doubleStarType]
+
+# returns void
+wavelib.computeScatteredWave.restype = None
+# double*, int, double*, double*, double*, double*, double* 
+wavelib.computeScatteredWave.argtypes = [doubleStarType,
+		                                 ctypes.c_int, 
+		                                 doubleStarType,
+		                                 doubleStarType,
+		                                 doubleStarType,
+		                                 doubleStarType,
+		                                 doubleStarType]
 
 # compute the field
 scat = numpy.zeros((ny + 1, nx + 1), numpy.complex64)
@@ -99,29 +117,12 @@ for j in range(ny + 1):
 
 		# declare prototype of cincident external C++ function 
 
-		# returns void
-		wavelib.cincident.restype = None
-		# double*, double*, double*, double*
-		wavelib.cincident.argtypes = [doubleStarType, 
-		                              doubleStarType, 
-		                              doubleStarType, 
-		                              doubleStarType]
 		wavelib.cincident(kvecPtr, pPtr, ctypes.byref(realVal), ctypes.byref(imagVal))
 		inci[j, i] = realVal.value + 1j*imagVal.value
 
 		xcPtr = xc.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
 		ycPtr = yc.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
 
-		# returns void
-		wavelib.computeScatteredWave.restype = None
-		# double*, int, double*, double*, double*, double*, double* 
-		wavelib.computeScatteredWave.argtypes = [doubleStarType,
-		                                         ctypes.c_int, 
-		                                         doubleStarType,
-		                                         doubleStarType,
-		                                         doubleStarType,
-		                                         doubleStarType,
-		                                         doubleStarType]
 		wavelib.computeScatteredWave(kvecPtr, nc1, xcPtr, ycPtr, pPtr, 
 			                         ctypes.byref(realVal), ctypes.byref(imagVal))
 		scat[j, i] = realVal.value + 1j*imagVal.value
