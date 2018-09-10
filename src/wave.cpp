@@ -10,9 +10,9 @@
  */
 std::complex<double>
 hankel1(int n, double x) {
-	double besselJ = boost::math::cyl_bessel_j<int, double>(n, x);
-	double besselY = boost::math::cyl_neumann<int, double>(n, x);
-	return besselJ + J1*besselY;
+    double besselJ = boost::math::cyl_bessel_j<int, double>(n, x);
+    double besselY = boost::math::cyl_neumann<int, double>(n, x);
+    return besselJ + J1*besselY;
 }
 
 /**
@@ -24,7 +24,7 @@ hankel1(int n, double x) {
  */
 std::complex<double> 
 incident(const double kvec[], const double point[]) {
-	return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
+    return std::exp(J1*(kvec[0]*point[0] + kvec[1]*point[1]));
 }
 
 /**
@@ -37,8 +37,8 @@ incident(const double kvec[], const double point[]) {
  */
 std::complex<double> 
 gradIncident(const double nvec[], const double kvec[], 
-	         const double point[]) {
-	return J1*(nvec[0]*kvec[0] + nvec[1]*kvec[1])*incident(kvec, point);
+             const double point[]) {
+    return J1*(nvec[0]*kvec[0] + nvec[1]*kvec[1])*incident(kvec, point);
 }
 
 /**
@@ -52,7 +52,7 @@ gradIncident(const double nvec[], const double kvec[],
  */
 std::complex<double> 
 computeScatteredWaveElement(const double kvec[], const double p0[], 
-	                        const double p1[], const double point[]) {
+                            const double p1[], const double point[]) {
 
     // xdot is anticlockwise
     double xdot[] = {p1[0] - p0[0], p1[1] - p0[1]};
@@ -105,14 +105,14 @@ cincident (const double kvec[], const double point[], double* real_part, double*
 }
 
 extern "C" void computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
-	                                 const double point[], double* real_part, double* imag_part) {
-	double p0[2], p1[2];
-	std::complex<double> res(0., 0.);
-	for (int i = 0; i < nc - 1; ++i) {
-		p0[0] = xc[i]; p0[1] = yc[i];
-		p1[0] = xc[i + 1]; p1[1] = yc[i + 1];
-		res += computeScatteredWaveElement(kvec, p0, p1, point);
-	}
+                                     const double point[], double* real_part, double* imag_part) {
+    double p0[2], p1[2];
+    std::complex<double> res(0., 0.);
+    for (int i = 0; i < nc - 1; ++i) {
+        p0[0] = xc[i]; p0[1] = yc[i];
+        p1[0] = xc[i + 1]; p1[1] = yc[i + 1];
+        res += computeScatteredWaveElement(kvec, p0, p1, point);
+    }
     *real_part = res.real();
     *imag_part = res.imag();
 }

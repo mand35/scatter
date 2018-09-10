@@ -20,7 +20,7 @@
  */
 extern "C" void
 cincident(const double kvec[], const double point[], 
-	      double* real_part, double* imag_part);
+          double* real_part, double* imag_part);
 
 /**
  * Total scattered wave response, summing up contributions from each segment
@@ -37,6 +37,6 @@ cincident(const double kvec[], const double point[],
 */
 extern "C" void
 computeScatteredWave(const double kvec[], int nc, const double xc[], const double yc[], 
-	                 const double point[], double* real_part, double* imag_part);
+                     const double point[], double* real_part, double* imag_part);
 
 #endif // WAVE_H
