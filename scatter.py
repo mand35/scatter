@@ -66,7 +66,7 @@ yg = numpy.linspace(ymin, ymax, ny + 1)
 waveLibFile = ''
 for root, dirs, files in os.walk('build/'):
     for file in files:
-        if file == 'wave.so':
+        if file[-3:] == '.so':
             waveLibFile = os.path.join(root, file)
 
 # open the shared library 
