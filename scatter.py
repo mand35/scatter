@@ -128,7 +128,7 @@ for j in range(ny + 1):
         scat[j, i] = realVal.value + 1j*imagVal.value
 
 if args.checksum:
-    print('Squared sum of scattered field amplitudes: {}'.format((scat*numpy.conj(scat)).sum().real))
+    print('Squared sum of scattered field |amplitudes|^2: {}'.format((scat*numpy.conj(scat)).sum().real))
 
 if args.save:
     # number of time frames
